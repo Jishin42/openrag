@@ -12,6 +12,11 @@ vdb/volumes
 # other files and folders
 misc
 uv.lock
+openrag.egg-info/dependency_links.txt
+openrag.egg-info/requires.txt
+openrag.egg-info/top_level.txt
+openrag.egg-info/PKG-INFO
+openrag.egg-info/SOURCES.txt
 
 # Ignore __pycache__ directories
 __pycache__/

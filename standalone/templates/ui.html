@@ -11,9 +11,9 @@
 <textarea id="query" rows="4" cols="60" placeholder="Ask something..."></textarea><br>
 <button onclick="send()">Ask</button>
 
-<h3>Upload PDF</h3>
-<input type="file" id="file" />
-<button onclick="upload()">Upload PDF</button>
+<h3>Upload PDFs</h3>
+<input type="file" id="file" multiple accept=".pdf"/>
+<button onclick="uploadPDF()">Upload PDF(s)</button>
 
 <hr>
 <pre id="result"></pre>
@@ -32,29 +32,46 @@ async function send() {
     document.getElementById('result').textContent = JSON.stringify(data, null, 2);
 }
 
-async function upload() {
-    const fileInput = document.getElementById('file');
+async function uploadPDF() {
+    const input = document.getElementById('file');
 
-    if (!fileInput.files.length) {
-        alert('Select a PDF first');
+    if (!input.files.length) {
+        alert('Select at least one PDF');
         return;
     }
 
     const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
 
-    document.getElementById('result').textContent = "Uploading...";
+    for (const file of input.files) {
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+            formData.append('files', file);
+        }
+    }
 
-    const res = await fetch('/upload_pdf', {
+    document.getElementById('result').textContent = 
+        `Uploading ${input.files.length} file(s)...`;
+
+    const res = await fetch('/upload_pdfs', {
         method: 'POST',
         body: formData
     });
 
     const data = await res.json();
-    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').textContent = 
+        JSON.stringify(data, null, 2);
 
-    fileInput.value = "";
+    input.value = "";
 }
+
+//détecte shift+enter pour envoyer la requête
+const textarea = document.getElementById('query');
+textarea.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && event.shiftKey) {
+        event.preventDefault();  // empêche le saut de ligne
+        send();                  // envoie la requête
+    }
+});
+
 </script>
 
 </body>

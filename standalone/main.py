@@ -128,7 +128,7 @@ def rag(q: Query):
     metas = results.get("metadatas", [[]])[0]
     context = "\n".join([f"Source: {meta['filename']}\n{doc}" for doc, meta in zip(docs, metas)])
 
-    prompt = f"Context:\n{context}\n\nQuestion: {q.query}\nAnswer the question based on the context, citing the sources."
+    prompt = f"Contexte:\n{context}\n\nQuestion: {q.query}\nRépondre à la question basée sur le contexte, en citant les sources."
     answer = ollama_generate(prompt)
 
     return {

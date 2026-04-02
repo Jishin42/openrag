@@ -11,6 +11,7 @@ vdb/volumes
 
 # other files and folders
 misc
+uv.lock
 
 # Ignore __pycache__ directories
 __pycache__/
@@ -72,3 +73,6 @@ charts/openrag-stack/charts/*.tgz
 .astro/
 dist/
 node_modules/
+
+# local RAG storage
+chroma_db

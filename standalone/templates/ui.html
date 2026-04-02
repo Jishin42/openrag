@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenRAG UI</title>
+</head>
+<body>
+
+<h2>OpenRAG (Ollama)</h2>
+
+<h3>Ask a question</h3>
+<textarea id="query" rows="4" cols="60" placeholder="Ask something..."></textarea><br>
+<button onclick="send()">Ask</button>
+
+<h3>Upload PDF</h3>
+<input type="file" id="file" />
+<button onclick="upload()">Upload PDF</button>
+
+<hr>
+<pre id="result"></pre>
+
+<script>
+async function send() {
+    const query = document.getElementById('query').value;
+
+    const res = await fetch('/rag', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query: query})
+    });
+
+    const data = await res.json();
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+}
+
+async function upload() {
+    const fileInput = document.getElementById('file');
+
+    if (!fileInput.files.length) {
+        alert('Select a PDF first');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    document.getElementById('result').textContent = "Uploading...";
+
+    const res = await fetch('/upload_pdf', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await res.json();
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+
+    fileInput.value = "";
+}
+</script>
+
+</body>
+</html>

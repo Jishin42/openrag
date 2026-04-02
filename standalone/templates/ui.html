@@ -1,78 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenRAG UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        form { margin-bottom: 20px; }
+        button { padding: 10px 20px; margin: 5px; }
+        #results { margin-top: 20px; }
+    </style>
 </head>
 <body>
+    <h1>OpenRAG Standalone</h1>
 
-<h2>OpenRAG (Ollama)</h2>
+    <h2>Upload PDFs</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="files" multiple accept=".pdf">
+        <button type="submit">Upload</button>
+    </form>
 
-<h3>Ask a question</h3>
-<textarea id="query" rows="4" cols="60" placeholder="Ask something..."></textarea><br>
-<button onclick="send()">Ask</button>
+    <h2>RAG Query</h2>
+    <form id="ragForm">
+        <input type="text" id="ragQuery" placeholder="Enter your RAG query" required>
+        <input type="number" id="ragTopK" placeholder="Top K" value="3">
+        <button type="submit">RAG</button>
+    </form>
 
-<h3>Upload PDFs</h3>
-<input type="file" id="file" multiple accept=".pdf"/>
-<button onclick="uploadPDF()">Upload PDF(s)</button>
+    <h2>Reset Database</h2>
+    <button id="resetBtn">Reset Chroma DB</button>
 
-<hr>
-<pre id="result"></pre>
+    <div id="results"></div>
 
-<script>
-async function send() {
-    const query = document.getElementById('query').value;
+    <script>
+        // Upload PDFs
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/upload_pdfs', { method: 'POST', body: formData });
+            const result = await response.json();
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        });
 
-    const res = await fetch('/rag', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({query: query})
-    });
+        // RAG Query
+        document.getElementById('ragForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = document.getElementById('ragQuery').value;
+            const top_k = document.getElementById('ragTopK').value;
+            const response = await fetch('/rag', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, top_k: parseInt(top_k) })
+            });
+            const result = await response.json();
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        });
 
-    const data = await res.json();
-    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-}
-
-async function uploadPDF() {
-    const input = document.getElementById('file');
-
-    if (!input.files.length) {
-        alert('Select at least one PDF');
-        return;
-    }
-
-    const formData = new FormData();
-
-    for (const file of input.files) {
-        if (file.name.toLowerCase().endsWith('.pdf')) {
-            formData.append('files', file);
-        }
-    }
-
-    document.getElementById('result').textContent = 
-        `Uploading ${input.files.length} file(s)...`;
-
-    const res = await fetch('/upload_pdfs', {
-        method: 'POST',
-        body: formData
-    });
-
-    const data = await res.json();
-    document.getElementById('result').textContent = 
-        JSON.stringify(data, null, 2);
-
-    input.value = "";
-}
-
-//détecte shift+enter pour envoyer la requête
-const textarea = document.getElementById('query');
-textarea.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter' && event.shiftKey) {
-        event.preventDefault();  // empêche le saut de ligne
-        send();                  // envoie la requête
-    }
-});
-
-</script>
-
+        // Reset Database
+        document.getElementById('resetBtn').addEventListener('click', async () => {
+            const response = await fetch('/reset', { method: 'DELETE' });
+            const result = await response.json();
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        });
+    </script>
 </body>
 </html>

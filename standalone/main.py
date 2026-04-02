@@ -27,7 +27,7 @@ embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 chroma_client = chromadb.Client(
     settings=chromadb.config.Settings(
         persist_directory="./chroma_db",
-        #is_persistent=True
+        is_persistent=False, #reinit db at each start
     )
 )
 collection = chroma_client.get_or_create_collection("documents")
@@ -77,11 +77,13 @@ def process_pdf_files(files: List[UploadFile]) -> int:
 
             ids = [str(uuid.uuid4()) for _ in chunks]
             embeddings = embedding_model.encode(chunks).tolist()
+            metadatas = [{"filename": file.filename} for _ in chunks]
 
             collection.add(
                 ids=ids,
                 documents=chunks,
-                embeddings=embeddings
+                embeddings=embeddings,
+                metadatas=metadatas
             )
             total_chunks += len(chunks)
 
@@ -121,17 +123,19 @@ def query(q: Query):
 @app.post("/rag")
 def rag(q: Query):
     embedding = embedding_model.encode(q.query).tolist()
-    results = collection.query(query_embeddings=[embedding], n_results=q.top_k)
+    results = collection.query(query_embeddings=[embedding], n_results=q.top_k, include=["documents", "metadatas"])
     docs = results.get("documents", [[]])[0]
-    context = "\n".join(docs)
+    metas = results.get("metadatas", [[]])[0]
+    context = "\n".join([f"Source: {meta['filename']}\n{doc}" for doc, meta in zip(docs, metas)])
 
-    prompt = f"Context:\n{context}\n\nQuestion: {q.query}\nAnswer:"
+    prompt = f"Context:\n{context}\n\nQuestion: {q.query}\nAnswer the question based on the context, citing the sources."
     answer = ollama_generate(prompt)
 
     return {
         "query": q.query,
         "context": docs,
-        "answer": answer
+        "answer": answer,
+        "sources": metas
     }
 
 @app.delete("/reset")

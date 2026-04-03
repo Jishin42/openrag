@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.templating import Jinja2Templates
-import pdfplumber
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import chromadb
@@ -9,6 +8,9 @@ import requests
 import uuid
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
+import tempfile
+import os
 
 
 # --- Config ---
@@ -62,14 +64,31 @@ def process_pdf_files(files: List[UploadFile]) -> int:
 
     for file in files:
         try:
-            with pdfplumber.open(file.file) as pdf:
-                texts = [page.extract_text() for page in pdf.pages if page.extract_text()]
+            # Save uploaded file to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                temp_file.write(file.file.read())
+                temp_file_path = temp_file.name
 
-            if not texts:
+            # Use PyPDFLoader for better parsing
+            loader = PyPDFLoader(temp_file_path)
+            documents = loader.load()
+
+            # Extract text from all pages
+            full_text = "\n".join([doc.page_content for doc in documents])
+
+            # Clean up temp file
+            os.unlink(temp_file_path)
+
+            if not full_text.strip():
                 continue
 
-            splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=80)
-            chunks = splitter.split_text("\n".join(texts))
+            # Improved chunking with larger chunks and more overlap
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,  # Increased from 400
+                chunk_overlap=200,  # Increased from 80
+                separators=["\n\n", "\n", " ", ""]
+            )
+            chunks = splitter.split_text(full_text)
 
             if not chunks:
                 continue

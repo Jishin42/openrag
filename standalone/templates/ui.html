@@ -9,6 +9,7 @@
         form { margin-bottom: 20px; }
         button { padding: 10px 20px; margin: 5px; }
         #results { margin-top: 20px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -51,7 +52,11 @@
                 body: JSON.stringify({ query })
             });
             const result = await response.json();
-            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            result.answer = result.answer.replace(/\\n/g, '\n');
+            document.getElementById('results').innerHTML = `
+                <h3>Answer:</h3>
+                <pre>${result.answer}</pre>
+            `;
         });
 
         // Reset Database

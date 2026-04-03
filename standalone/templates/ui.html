@@ -130,8 +130,11 @@
             const top_k = document.getElementById('ragTopK').value;
             const results = document.getElementById('results');
             
-            // Show spinner
-            results.innerHTML = '<h3>Answer:</h3><div class="spinner active"></div>';
+            // Show spinner at the top
+            const timestamp = new Date().toLocaleString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<h3>Query at ${timestamp}:</h3><div class="spinner active"></div>`;
+            results.insertBefore(logEntry, results.firstChild);
             
             const response = await fetch('/rag', {
                 method: 'POST',
@@ -140,9 +143,10 @@
             });
             const result = await response.json();
             result.answer = result.answer.replace(/\\n/g, '\n');
-            results.innerHTML = `
-                <h3>Answer:</h3>
+            logEntry.innerHTML = `
+                <h3>Query at ${timestamp}:</h3>
                 <pre>${result.answer}</pre>
+                <hr>
             `;
         });
 

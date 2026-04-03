@@ -92,9 +92,10 @@ def process_pdf_files(files: List[UploadFile]) -> int:
     return total_chunks
 
 # --- Routes ---
-@app.get("/")
-def root():
-    return {"status": "running"}
+@app.get("/count_chunks")
+def count_chunks():
+    count = collection.count()
+    return {"count": count}
 
 @app.get("/ui")
 def ui(request: Request):

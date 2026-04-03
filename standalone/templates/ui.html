@@ -57,9 +57,12 @@
     <h1>OpenRAG Standalone</h1>
 
     <h2>Upload PDFs</h2>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="files" multiple accept=".pdf">
-        <button type="submit">Upload</button>
+    <form id="uploadForm" enctype="multipart/form-data" style="display: flex; align-items: center; gap: 10px; max-width: 1000px;">
+        <input type="file" name="files" multiple accept=".pdf" style="flex: 1;">
+        <span id="uploadStatus" style="color: green; width: 200px; text-align: center;"></span>
+        <button type="submit" style="width: 80px;">Upload</button>
+        <span id="chunkCount" style="color: blue; width: 120px; text-align: center;"></span>
+        <button type="button" id="resetBtn" style="width: 120px;">Reset Chroma DB</button>
     </form>
 
     <h2 style="display: flex; align-items: center; gap: 10px;">
@@ -71,12 +74,20 @@
         <button type="submit">RAG</button>
     </form>
 
-    <h2>Reset Database</h2>
-    <button id="resetBtn">Reset Chroma DB</button>
-
     <div id="results"></div>
 
     <script>
+        // Function to update chunk count
+        async function updateChunkCount() {
+            try {
+                const response = await fetch('/count_chunks');
+                const result = await response.json();
+                document.getElementById('chunkCount').textContent = `${result.count} chunks loaded`;
+            } catch (e) {
+                document.getElementById('chunkCount').textContent = 'Error loading count';
+            }
+        }
+
         // Auto-resize textarea
         const textarea = document.getElementById('ragQuery');
         textarea.addEventListener('input', function() {
@@ -101,10 +112,15 @@
         // Upload PDFs
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            document.getElementById('uploadStatus').textContent = '';
             const formData = new FormData(e.target);
             const response = await fetch('/upload_pdfs', { method: 'POST', body: formData });
             const result = await response.json();
-            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            document.getElementById('uploadStatus').textContent = `OK - ${result.chunks} chunks indexed from ${result.files} files.`;
+            // Reset file input
+            document.getElementById('uploadForm').querySelector('input[type="file"]').value = '';
+            // Update chunk count
+            updateChunkCount();
         });
 
         // RAG Query
@@ -135,7 +151,12 @@
             const response = await fetch('/reset', { method: 'DELETE' });
             const result = await response.json();
             document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            // Update chunk count
+            updateChunkCount();
         });
+
+        // Initialize chunk count on page load
+        updateChunkCount();
     </script>
 </body>
 </html>

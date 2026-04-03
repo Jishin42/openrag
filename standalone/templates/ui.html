@@ -59,9 +59,12 @@
     <h2>Upload PDFs</h2>
     <form id="uploadForm" enctype="multipart/form-data" style="display: flex; align-items: center; gap: 10px; max-width: 1000px;">
         <input type="file" name="files" multiple accept=".pdf" style="flex: 1;">
-        <span id="uploadStatus" style="color: green; width: 200px; text-align: center;"></span>
+        <span id="uploadStatus" style="color: green; width: 250px; text-align: center;"></span>
         <button type="submit" style="width: 80px;">Upload</button>
-        <span id="chunkCount" style="color: blue; width: 120px; text-align: center;"></span>
+        <div style="display: flex; flex-direction: column; align-items: center; width: 150px;">
+            <span id="chunkCount" style="color: blue; width: 150px; text-align: center;"></span>
+            <span id="dbSize" style="color: gray; width: 150px; text-align: center; font-size: 0.9em;"></span>
+        </div>
         <button type="button" id="resetBtn" style="width: 120px;">Reset Chroma DB</button>
     </form>
 
@@ -83,8 +86,10 @@
                 const response = await fetch('/count_chunks');
                 const result = await response.json();
                 document.getElementById('chunkCount').textContent = `${result.count} chunks loaded`;
+                document.getElementById('dbSize').textContent = result.size_human ? `${result.size_human} Chroma size` : '';
             } catch (e) {
                 document.getElementById('chunkCount').textContent = 'Error loading count';
+                document.getElementById('dbSize').textContent = '';
             }
         }
 

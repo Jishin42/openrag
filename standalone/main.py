@@ -110,11 +110,34 @@ def process_pdf_files(files: List[UploadFile]) -> int:
 
     return total_chunks
 
+def human_readable_size(size_bytes: int) -> str:
+    if size_bytes == 0:
+        return "0 B"
+    units = ["B", "KB", "MB", "GB", "TB"]
+    i = 0
+    while size_bytes >= 1024 and i < len(units) - 1:
+        size_bytes /= 1024.0
+        i += 1
+    return f"{size_bytes:.1f} {units[i]}"
+
 # --- Routes ---
 @app.get("/count_chunks")
 def count_chunks():
     count = collection.count()
-    return {"count": count}
+    db_dir = os.path.abspath("./chroma_db")
+    total_size = 0
+    if os.path.isdir(db_dir):
+        for root, _, files in os.walk(db_dir):
+            for name in files:
+                try:
+                    total_size += os.path.getsize(os.path.join(root, name))
+                except OSError:
+                    pass
+    return {
+        "count": count,
+        "size_bytes": total_size,
+        "size_human": human_readable_size(total_size)
+    }
 
 @app.get("/ui")
 def ui(request: Request):

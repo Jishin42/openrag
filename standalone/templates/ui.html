@@ -62,7 +62,10 @@
         <button type="submit">Upload</button>
     </form>
 
-    <h2>RAG Query</h2>
+    <h2 style="display: flex; align-items: center; gap: 10px;">
+        RAG Query
+        <input type="number" id="ragTopK" placeholder="Top K" value="3" min="1" max="20" style="padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 80px;">
+    </h2>
     <form id="ragForm">
         <textarea id="ragQuery" placeholder="Enter your RAG query" required></textarea>
         <button type="submit">RAG</button>
@@ -108,6 +111,7 @@
         document.getElementById('ragForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = document.getElementById('ragQuery').value;
+            const top_k = document.getElementById('ragTopK').value;
             const results = document.getElementById('results');
             
             // Show spinner
@@ -116,7 +120,7 @@
             const response = await fetch('/rag', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
+                body: JSON.stringify({ query, top_k: parseInt(top_k) })
             });
             const result = await response.json();
             result.answer = result.answer.replace(/\\n/g, '\n');

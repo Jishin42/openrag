@@ -11,10 +11,9 @@ import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-
 # --- Config ---
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3") #choose your Ollama model here (e.g., "llama3", "mistral", "gemini-1.5-pro", etc. cf https://ollama.com/library)
 
 # --- Init FastAPI ---
 app = FastAPI(title="OpenRAG Standalone (Ollama)")

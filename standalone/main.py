@@ -7,10 +7,10 @@ from typing import List, Optional
 import requests
 import uuid
 import os
+import shutil
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 import tempfile
-import os
 
 
 # --- Config ---
@@ -32,6 +32,7 @@ chroma_client = chromadb.Client(
     )
 )
 collection = chroma_client.get_or_create_collection("documents")
+ram_size_bytes = 0
 
 # --- Schemas ---
 class Document(BaseModel):
@@ -103,6 +104,9 @@ def process_pdf_files(files: List[UploadFile]) -> int:
                 embeddings=embeddings,
                 metadatas=metadatas
             )
+            chunk_bytes = sum(len(chunk.encode('utf-8')) for chunk in chunks)
+            global ram_size_bytes
+            ram_size_bytes += chunk_bytes
             total_chunks += len(chunks)
 
         except Exception as e:
@@ -136,7 +140,9 @@ def count_chunks():
     return {
         "count": count,
         "size_bytes": total_size,
-        "size_human": human_readable_size(total_size)
+        "size_human": human_readable_size(total_size),
+        "ram_bytes": ram_size_bytes,
+        "ram_human": human_readable_size(ram_size_bytes)
     }
 
 @app.get("/ui")
@@ -182,9 +188,19 @@ def rag(q: Query):
 
 @app.delete("/reset")
 def reset_db():
+    # Delete the Chroma collection and any persisted files so size resets correctly.
     chroma_client.delete_collection("documents")
-    global collection
+
+    db_dir = os.path.abspath("./chroma_db")
+    if os.path.isdir(db_dir):
+        try:
+            shutil.rmtree(db_dir)
+        except Exception:
+            pass
+
+    global collection, ram_size_bytes
     collection = chroma_client.get_or_create_collection("documents")
+    ram_size_bytes = 0
     return {"status": "reset"}
 
 # --- Run ---

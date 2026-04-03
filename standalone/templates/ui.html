@@ -62,8 +62,9 @@
         <span id="uploadStatus" style="color: green; width: 250px; text-align: center;"></span>
         <button type="submit" style="width: 80px;">Upload</button>
         <div style="display: flex; flex-direction: column; align-items: center; width: 150px;">
-            <span id="chunkCount" style="color: blue; width: 150px; text-align: center;"></span>
-            <span id="dbSize" style="color: gray; width: 150px; text-align: center; font-size: 0.9em;"></span>
+            <span id="chunkCount" style="color: blue; width: 150px; text-align: right;"></span>
+            <span id="dbSize" style="color: gray; width: 150px; text-align: right; font-size: 0.9em;"></span>
+            <span id="ramSize" style="color: gray; width: 150px; text-align: right; font-size: 0.9em;"></span>
         </div>
         <button type="button" id="resetBtn" style="width: 120px;">Reset Chroma DB</button>
     </form>
@@ -86,10 +87,12 @@
                 const response = await fetch('/count_chunks');
                 const result = await response.json();
                 document.getElementById('chunkCount').textContent = `${result.count} chunks loaded`;
-                document.getElementById('dbSize').textContent = result.size_human ? `${result.size_human} Chroma size` : '';
+                document.getElementById('dbSize').textContent = result.size_human ? `${result.size_human} DB disk size` : '';
+                document.getElementById('ramSize').textContent = result.ram_human ? `${result.ram_human} DB RAM size` : '';
             } catch (e) {
                 document.getElementById('chunkCount').textContent = 'Error loading count';
                 document.getElementById('dbSize').textContent = '';
+                document.getElementById('ramSize').textContent = '';
             }
         }
 
@@ -157,10 +160,12 @@
 
         // Reset Database
         document.getElementById('resetBtn').addEventListener('click', async () => {
+            document.getElementById('chunkCount').textContent = 'Refreshing...';
+            document.getElementById('dbSize').textContent = '';
             const response = await fetch('/reset', { method: 'DELETE' });
             const result = await response.json();
             document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
-            // Update chunk count
+            // Update chunk count and db size
             updateChunkCount();
         });
 

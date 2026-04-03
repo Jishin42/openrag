@@ -23,7 +23,6 @@
     <h2>RAG Query</h2>
     <form id="ragForm">
         <input type="text" id="ragQuery" placeholder="Enter your RAG query" required>
-        <input type="number" id="ragTopK" placeholder="Top K" value="3">
         <button type="submit">RAG</button>
     </form>
 
@@ -46,11 +45,10 @@
         document.getElementById('ragForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = document.getElementById('ragQuery').value;
-            const top_k = document.getElementById('ragTopK').value;
             const response = await fetch('/rag', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, top_k: parseInt(top_k) })
+                body: JSON.stringify({ query })
             });
             const result = await response.json();
             document.getElementById('results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;

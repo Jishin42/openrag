@@ -134,8 +134,7 @@ def rag(q: Query):
     return {
         "query": q.query,
         "context": docs,
-        "answer": answer,
-        "sources": metas
+        "answer": answer
     }
 
 @app.delete("/reset")

@@ -10,6 +10,47 @@
         button { padding: 10px 20px; margin: 5px; }
         #results { margin-top: 20px; }
         pre { white-space: pre-wrap; word-wrap: break-word; }
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px 0;
+        }
+        .spinner.active {
+            display: block;
+        }
+        #ragForm {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            align-items: flex-start;
+        }
+        #ragQuery {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            resize: none;
+            overflow: hidden;
+            min-height: 50px;
+            line-height: 1.5;
+        }
+        #ragForm button {
+            padding: 12px 20px;
+            cursor: pointer;
+            align-self: flex-start;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -23,7 +64,7 @@
 
     <h2>RAG Query</h2>
     <form id="ragForm">
-        <input type="text" id="ragQuery" placeholder="Enter your RAG query" required>
+        <textarea id="ragQuery" placeholder="Enter your RAG query" required></textarea>
         <button type="submit">RAG</button>
     </form>
 
@@ -33,6 +74,27 @@
     <div id="results"></div>
 
     <script>
+        // Auto-resize textarea
+        const textarea = document.getElementById('ragQuery');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Handle Enter to submit, Shift+Enter for newline
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Shift+Enter: allow newline (default behavior)
+                    return;
+                } else {
+                    // Enter: submit form
+                    e.preventDefault();
+                    document.getElementById('ragForm').dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
         // Upload PDFs
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -46,6 +108,11 @@
         document.getElementById('ragForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = document.getElementById('ragQuery').value;
+            const results = document.getElementById('results');
+            
+            // Show spinner
+            results.innerHTML = '<h3>Answer:</h3><div class="spinner active"></div>';
+            
             const response = await fetch('/rag', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -53,7 +120,7 @@
             });
             const result = await response.json();
             result.answer = result.answer.replace(/\\n/g, '\n');
-            document.getElementById('results').innerHTML = `
+            results.innerHTML = `
                 <h3>Answer:</h3>
                 <pre>${result.answer}</pre>
             `;
